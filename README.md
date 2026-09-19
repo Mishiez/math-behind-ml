@@ -235,17 +235,55 @@ In simple terms:
 
 ## Implementation
 
-After understanding these concepts, the practical work in this repository will implement:
+The practical work in this repository implements:
 
-1. Gradient descent from scratch using NumPy.
-2. A simple loss function and a converging loss curve.
-3. A two-layer neural network from scratch.
+1. Gradient descent from scratch using NumPy — [`gradient_descent.ipynb`](gradient_descent.ipynb).
+2. A simple loss function and a converging loss curve — same notebook.
+3. A two-layer neural network from scratch, including the paper derivation — [`two_layer_nn.ipynb`](two_layer_nn.ipynb).
 4. Forward propagation.
 5. Backpropagation using manually derived gradients.
-6. Parameter updates using gradient descent.
+6. Parameter updates and a training loop using gradient descent.
 7. Numerical comparison against an equivalent reference implementation.
 
-The from-scratch implementation will not use automatic differentiation or a machine learning framework for calculating the gradients.
+The from-scratch implementation does not use automatic differentiation or a machine learning framework to calculate the gradients — only NumPy. PyTorch is used only as an external reference to validate the results, in a clearly separated comparison section.
+
+## Results and Validation
+
+### Gradient descent (`gradient_descent.ipynb`)
+
+Minimising $L(w) = (w-3)^2$ from $w_0 = 0$ with learning rate $\alpha = 0.1$ for 50 iterations:
+
+* Final $w$: 2.999957 (target: 3)
+* Final loss: $1.83 \times 10^{-9}$ (target: 0)
+
+Comparing four learning rates confirms the expected behaviour of gradient descent on this loss:
+
+| Learning rate | Behaviour | Outcome |
+|---|---|---|
+| 0.01 | too small | converges, but very slowly |
+| 0.10 | good | converges smoothly |
+| 0.90 | oscillates | converges, but overshoots the minimum every step |
+| 1.10 | too large | diverges |
+
+### Two-layer network (`two_layer_nn.ipynb`)
+
+Trained on a standardised `make_moons` toy dataset ($m=200$, $d=2$, $h=4$ hidden units), full-batch gradient descent, learning rate 0.5, 3000 epochs.
+
+**From scratch:**
+* Initial loss: 0.6642 — close to $\ln 2 \approx 0.6931$, as expected when small random weights push every prediction near 0.5.
+* Final loss: 0.0586
+* Final accuracy: 96.5%
+* Loss decreases monotonically, has no NaNs, and stabilises over the last 500 epochs (checked explicitly in the notebook, not just eyeballed off the plot).
+
+**Numerical gradient check** (central difference, $\epsilon = 10^{-5}$, checked on every one of the 17 parameters):
+* Max relative error vs. the analytic `backward` gradients: ~$4 \times 10^{-9}$
+* Tolerance: $10^{-5}$ — passed for every parameter.
+
+**Reference comparison (PyTorch)** — same architecture, same exact initial weights, same learning rate, plain full-batch SGD, float64:
+* Gradients at initialisation (autograd vs. analytic `backward`): max difference ~$10^{-17}$.
+* After training: final loss, predictions, and all four weight matrices match to within ~$10^{-15}$.
+
+Tolerance used throughout the reference comparison: $10^{-5}$. Every comparison landed several orders of magnitude inside it — the remaining differences are floating-point noise, not implementation error.
 
 ## Goal
 
